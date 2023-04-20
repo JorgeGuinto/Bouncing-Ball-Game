@@ -12,7 +12,9 @@ public class Ball {
     private int xSpeed;
     private int ySpeed;
     private Color color = Color.WHITE;
+    private boolean ballDestroyed = false;
 
+    // == Constructor ==
     public Ball(int x, int y, int size, int xSpeed, int ySpeed) {
         this.x = x;
         this.y = y;
@@ -20,14 +22,20 @@ public class Ball {
         this.xSpeed = xSpeed;
         this.ySpeed = ySpeed;
     }
+
+    // == Public Methods ==
     public void update() {
         x += xSpeed;
         y += ySpeed;
         if (x <= this.size || x >= Gdx.graphics.getWidth() -this.size) {
             xSpeed = -xSpeed;
         }
-        if (y <= this.size || y >= Gdx.graphics.getHeight() - this.size) {
+        if (y >= Gdx.graphics.getHeight() - this.size) {
             ySpeed = -ySpeed;
+        }
+        if (y <= this.size) {
+            ySpeed = -ySpeed;
+            ballDestroyed = true;
         }
     }
     public void draw(ShapeRenderer shape) {
@@ -42,6 +50,9 @@ public class Ball {
         return checkCollision(null, block);
     }
 
+    public boolean isBallDestroyed() {
+        return ballDestroyed;
+    }
 
     // == Private methods ==
     private boolean checkCollision(Paddle paddle, Block block) {
@@ -65,16 +76,17 @@ public class Ball {
         if(collidesWith(x, y, width, height)){
             if (paddle != null){
                 color = Color.BLUE;
-
-                this.xSpeed = leftRightPaddleCollision(x,y,width,height) ?
+                this.xSpeed = leftRightPaddleCollision(x,width) ?
                         (this.xSpeed < 0 ? this.xSpeed : -this.xSpeed) :
                         (this.xSpeed <= 0 ? -this.xSpeed : this.xSpeed);
-
+                this.ySpeed = -this.ySpeed;
             } else {
                 color = Color.GREEN;
                 block.setDestroyed(true);
+                int upDown = blockUpDownCollision(x,y,width,height);
+                this.ySpeed = upDown >= 0 ? -this.ySpeed: this.ySpeed;
+                this.xSpeed = upDown >= 0 ? this.xSpeed: -this.xSpeed;
             }
-            this.ySpeed = -this.ySpeed;
             return true;
 
         } else {
@@ -95,9 +107,19 @@ public class Ball {
                                 (y <= this.y && y + height >= this.y)));
     }
 
-    private boolean leftRightPaddleCollision(int x, int y, int width, int height) {
+    private boolean leftRightPaddleCollision(int x, int width) {
 //        True = collides on left
         return this.x < (x + width/2);
     }
 
+    private int blockUpDownCollision(int x, int y, int width, int height){
+//        0 = down collision
+//        1 = up collision
+        if (this.x >= x + this.xSpeed && this.x <= x + width - this.xSpeed && this.y + this.size <= y + this.ySpeed){
+            return 0;
+        } else if (this.x >= x + this.xSpeed && this.x <= x + width - this.xSpeed && this.y - this.size >= y + height/2){// - this.ySpeed){
+            return 1;
+        }
+        return -1;
+    }
 }

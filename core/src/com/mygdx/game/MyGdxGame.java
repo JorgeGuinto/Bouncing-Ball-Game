@@ -15,16 +15,18 @@ public class MyGdxGame extends Game {
 	private ShapeRenderer shape;
 	private ArrayList<Ball> balls = new ArrayList<>();
 	private ArrayList<Block> blocks = new ArrayList<>();
-	private Ball ball;
 	private Paddle paddle;
 	private Random rand = new Random();
+	private int xSpeed = 4;
+	private int ySpeed = -4;
+	private int size = 8;
 	@Override
 	public void create () {
 		int blockWidth = 63;
 		int blockHeight = 20;
 
 		shape = new ShapeRenderer();
-		ball = new Ball(25,(Gdx.graphics.getHeight()/2)-15,10, 4, 4);
+		balls.add(new Ball(25,(Gdx.graphics.getHeight()/2)-15,size, xSpeed, ySpeed));
 		paddle = new Paddle();
 
 		for (int y = Gdx.graphics.getHeight()/2; y < Gdx.graphics.getHeight(); y += blockHeight + 10) {
@@ -32,51 +34,49 @@ public class MyGdxGame extends Game {
 				blocks.add(new Block(x, y, blockWidth, blockHeight));
 			}
 		}
-
-//		For lots of balls
-//		for (int i = 0; i < 10; i++) {
-//			balls.add(new Ball(
-//					rand.nextInt(Gdx.graphics.getWidth()-50),
-//					rand.nextInt(Gdx.graphics.getHeight()-50),
-//					rand.nextInt(50),
-//					rand.nextInt(15),
-//					rand.nextInt(15)));
-//		}
 	}
 
 	@Override
 	public void render() {
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		shape.begin(ShapeRenderer.ShapeType.Filled);
-		boolean paddleCollide = ball.checkCollision(paddle);
 
-		for (Block block : blocks) {
-			if (!paddleCollide){
-				if (ball.checkCollision(block)) {
-					break;
+		for(int i = 0; i < balls.size(); i++) {
+			Ball ball = balls.get(i);
+			boolean paddleCollide = ball.checkCollision(paddle);
+
+			for (Block block : blocks) {
+				if (!paddleCollide){
+					if (ball.checkCollision(block)) {
+						break;
+					}
 				}
+				block.update();
+				block.draw(shape);
 			}
-			block.update();
-			block.draw(shape);
+
+			if (!ball.isBallDestroyed()) {
+				ball.update();
+				ball.draw(shape);
+			}
 		}
 
 		for(int i = 0; i < blocks.size(); i++) {
 			Block tempBlock = blocks.get(i);
 			if (tempBlock.isDestroyed()){
+				if (Math.random() > .8){
+					balls.add(new Ball(tempBlock.getX() + tempBlock.getWidth()/2,
+							tempBlock.getY(),
+							size,
+							xSpeed, ySpeed));
+				}
 				blocks.remove(i);
 				i--;
 			}
 		}
 
-		ball.update();
 		paddle.update();
 		paddle.draw(shape);
-		ball.draw(shape);
-
-//		for(Ball ball : balls) {
-//			ball.update();
-//			ball.draw(shape);
-//		}
 		shape.end();
 	}
 
